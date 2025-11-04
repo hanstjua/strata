@@ -1,0 +1,2 @@
+# strata
+A backtesting application
