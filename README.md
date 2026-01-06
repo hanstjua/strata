@@ -16,7 +16,7 @@ Try it [here](https://hanstjua.work/strata/index.html)!
 
 ---
 
-## Getting Started
+## How to Use
 
 ### Editor
 
@@ -40,7 +40,14 @@ To install a package you can either do `your-package` or `your-package==1.2.3`.
 
 You can specify which OHLCV data you want access to.
 
-Each OHLCV data should have a **name** (which you will use to access the data in your code), **symbol**, **start date**, **end date**, and **interval** (or frequency).
+Each OHLCV data should have the following attributes:
+- **name** (which you will use to access the data in your code)
+- **symbol**
+- **start date**
+- **end date**
+- **interval** (or frequency).
+
+After changing the value for any of the attributes (except for **name**), you should press the *reload* button to re-fetch the data.
 
 ---
 
