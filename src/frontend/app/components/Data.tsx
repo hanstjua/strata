@@ -25,7 +25,9 @@ export const Data = () => {
                         low: [],
                         volume: [],
                         timestamp: []
-                    }
+                    },
+                    isModified: false,
+                    isReloading: false
                 }
             }
         });

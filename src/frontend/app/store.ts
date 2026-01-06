@@ -16,6 +16,8 @@ export interface TickerData {
         low: number[]
         volume: bigint[]
     }
+    isModified: boolean
+    isReloading: boolean
 };
 
 export interface Data {
@@ -33,6 +35,7 @@ export interface Package {
 
 export interface Editor {
     editorView: EditorView | null
+    isExecuting: boolean
 }
 
 export interface Models {
@@ -68,6 +71,10 @@ export const useStore = () => {
         latestDate: "",
         availableIntervals: []
     })
+    const [editor, setEditor] = useState<Editor>({
+        editorView: null,
+        isExecuting: false
+    });
 
     const functions = {
         addPackage: ({ package_ }: any) => {
@@ -77,12 +84,11 @@ export const useStore = () => {
         addTickerData: async ({ tickerData }: any) => {
             const newTickerData = data.tickerData;
             newTickerData.push(tickerData)
-            console.log(data)
             setData({ ...data, tickerData: newTickerData });
         },
         removeTickerData: ({ uuid }: any) => {
             data!.tickerData = data!.tickerData.filter(d => d.uuid !== uuid)
-            setData(data);
+            setData({ ...data });
         },
         updateTickerData: async ({ tickerData }: any) => {
             const i = data!.tickerData.indexOf(data!.tickerData.find(t => t.uuid === tickerData.uuid)!);
@@ -100,7 +106,13 @@ export const useStore = () => {
             data!.earliestDate = earliestDate;
             data!.latestDate = latestDate;
             data!.availableIntervals = availableIntervals;
-            setData(data);
+            setData({ ...data });
+        },
+        executeCode: async ({}) => {
+            setEditor({ ...editor, isExecuting: true });
+        },
+        completeCodeExecution: async ({}) => {
+            setEditor({ ...editor, isExecuting: false });
         }
     };
 
@@ -111,7 +123,8 @@ export const useStore = () => {
     return new Store({
         models: {
             packages: packages,
-            data: data
+            data: data,
+            editor: editor
         },
         dispatch: dispatch
     })

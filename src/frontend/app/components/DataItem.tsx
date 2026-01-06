@@ -2,7 +2,6 @@ import { ChangeEvent, FormEvent, useContext, useState } from "react"
 import { StoreContext, TickerData } from "../store"
 
 export const DataItem = ({ tickerData }: { tickerData: TickerData }) => {
-    console.log(tickerData.ticker)
     const store = useContext(StoreContext);
     const data = store!.models.data;
 
@@ -21,11 +20,10 @@ export const DataItem = ({ tickerData }: { tickerData: TickerData }) => {
                 state.endDate !== tickerData.endDate ||
                 state.interval !== tickerData.interval
             )) {
-            console.log(state);
-            console.log(tickerData);
+            setState({ ...state, isReloading: true })
 
             const newData = await fetch(
-                `/data/market?t=${tickerData.name}&s=${tickerData.startDate}&e=${tickerData.endDate}&i=${tickerData.interval}`
+                `/data/market?t=${state.ticker}&s=${state.startDate}&e=${state.endDate}&i=${state.interval}`
             ).then(r => r.json());
 
             await store!.dispatch({
@@ -44,6 +42,8 @@ export const DataItem = ({ tickerData }: { tickerData: TickerData }) => {
                     }
                 }
             });
+
+            setState({ ...state, isModified: false, isReloading: false })
         }
 
 
@@ -68,24 +68,25 @@ export const DataItem = ({ tickerData }: { tickerData: TickerData }) => {
     }
 
     const onUpdateTicker = (e: ChangeEvent<HTMLSelectElement>) => {
-        setState({ ...state, ticker: e.target.value });
+        setState({ ...state, ticker: e.target.value, isModified: true });
     }
 
     const onUpdateStartDate = (e: ChangeEvent<HTMLInputElement>) => {
-        setState({ ...state, startDate: e.target.value });
+        setState({ ...state, startDate: e.target.value, isModified: true });
     }
 
     const onUpdateEndDate = (e: ChangeEvent<HTMLInputElement>) => {
-        setState({ ...state, endDate: e.target.value });
+        setState({ ...state, endDate: e.target.value, isModified: true });
     }
 
     const onUpdateInterval = (e: ChangeEvent<HTMLSelectElement>) => {
-        setState({ ...state, interval: e.target.value });
+        console.log(`new interval: ${e.target.value}`)
+        setState({ ...state, interval: e.target.value, isModified: true });
     }
 
     const addInvalid = (isInvalid: boolean, classes: string) => isInvalid ? `${classes} is-invalid` : classes;
 
-    return (<div className="input-group d-flex">
+    return (<div className={`input-group d-flex border rounded ${state.isModified ? "border-warning border-2" : "border-0"}`}>
         <input
             className={addInvalid(state.name === "", "form-control form-control-sm")}
             type="text"
@@ -119,10 +120,11 @@ export const DataItem = ({ tickerData }: { tickerData: TickerData }) => {
             <option value="">- Select interval -</option>
             {intervalOptions}
         </select>
-        <button className="btn btn-sm text-info" type="button" onClick={onUpdate}>
-            <span className="material-symbols-rounded">refresh</span>
+        <button className={`btn btn-sm ${state.isModified ? "btn-warning" : "btn-secondary disabled"} ${state.isReloading ? "disabled" : ""}`} type="button" onClick={onUpdate}>
+            <span className="material-symbols-rounded">{state.isReloading ? "" : "refresh"}</span>
+            <div className={state.isReloading ? "spinner-border spinner-border-sm": ""}></div>
         </button>
-        <button className="btn btn-sm text-danger" type="button" onClick={onDelete}>
+        <button className="btn btn-sm btn-danger" type="button" onClick={onDelete}>
             <span className="material-symbols-rounded">delete</span>
         </button>
     </div>)

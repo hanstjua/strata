@@ -20,9 +20,14 @@ export const Editor: FunctionComponent = () => {
     const onRun = async () => {
         const body = document.querySelector('body')
 
+        await store?.dispatch({
+            function: 'executeCode',
+            arguments: {}
+        });
+
         try {
-            const INPUT = window.pyodide.runPython(
-                'import pandas as pd; INPUT = {name: pd.DataFrame(data) for name, data in _input.to_py().items()}; INPUT',
+            const INPUT = await window.pyodide.runPythonAsync(
+                'import pandas as pd; INPUT = {name: pd.DataFrame(data, index=pd.DatetimeIndex(data["timestamp"])) for name, data in _input.to_py().items()}; INPUT',
                 {
                     locals: new Map([
                         ['_input', new Map(store!.models.data.tickerData.map(t => [t.name, t.content]))]
@@ -30,9 +35,9 @@ export const Editor: FunctionComponent = () => {
                 }
             )
             const locals = new Map([['INPUT', INPUT]])
-            window.pyodide.runPython(window.editorView.state.doc.toString(), { locals: locals });
-            const result = window.pyodide.runPython(
-                'from pyodide.ffi import to_js; import js; to_js(OUTPUT.to_dict(orient="list"), dict_converter=js.Object.fromEntries)',
+            await window.pyodide.runPythonAsync(window.editorView.state.doc.toString(), { locals: locals });
+            const [result, index] = await window.pyodide.runPythonAsync(
+                'from pyodide.ffi import to_js; import js; [to_js(OUTPUT.to_dict(orient="list"), dict_converter=js.Object.fromEntries), to_js([str(i) for i in OUTPUT.index])]',
                 { locals: locals }
             )
 
@@ -40,7 +45,7 @@ export const Editor: FunctionComponent = () => {
                 throw new MissingOutputError('OUTPUT variable not found.\nMake sure your Python code assigns a DataFrame object to a variable named OUTPUT.');
             }
 
-            window.dispatchEvent(new CustomEvent('updateChart', { detail: { data: result } }))
+            window.dispatchEvent(new CustomEvent('updateChart', { detail: { data: result, index: index } }))
 
         } catch (e) {
             const errorModal = window.bootstrap.Modal.getOrCreateInstance(document.querySelector('#error-modal'))
@@ -49,14 +54,19 @@ export const Editor: FunctionComponent = () => {
             content.innerText = e;
             errorModal.toggle();
         }
+
+        await store?.dispatch({
+            function: 'completeCodeExecution',
+            arguments: {}
+        });
     }
 
     return (<div className="d-flex flex-column" style={{ height: "100%" }}>
         <CodeInput defaultCode={pyCode} />
         <div className="mx-3 mb-3">
-            <button className="btn btn-secondary d-flex gap-1" id="py-button" onClick={onRun}>
-                <span className="material-symbols-rounded">play_arrow</span>
-                <span>Run</span>
+            <button className={`btn ${store?.models.editor.isExecuting ? "disabled" : "btn-success"} d-flex gap-1`} id="py-button" onClick={onRun}>
+                <span className="material-symbols-rounded">{store?.models.editor.isExecuting ? "" : "play_arrow"}</span>
+                <span>{store?.models.editor.isExecuting ? "Running ..." : "Run"}</span>
             </button>
         </div>
     </div>)

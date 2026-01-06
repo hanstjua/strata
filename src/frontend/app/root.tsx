@@ -1,5 +1,5 @@
 import { Links, Meta, Outlet, Scripts } from "@remix-run/react";
-import { useEffect, useState, useRef, useContext } from "react";
+import { useEffect, useState } from "react";
 import type { FunctionComponent, ReactElement } from "react";
 import { StoreContext, useStore } from "./store";
 import { Data } from "./components/Data";
@@ -240,7 +240,6 @@ export default function App() {
                     referrerPolicy="no-referrer"
                 />
                 <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded" rel="stylesheet" />
-                <link rel="stylesheet" href="https://pyscript.net/releases/2025.10.3/core.css"></link>
                 <Meta />
                 <Links />
             </head>
